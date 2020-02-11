@@ -1,1 +1,1 @@
-This is a repository for Michigan State University CSE-891-003: nlp 
+This is a repository for Michigan State University CSE-891-003: nl
