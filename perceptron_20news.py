@@ -7,15 +7,13 @@ import numpy as np
 class perceptron():
     def __init__(self, dim):
         self.learning_rate = 10
-        self.max_iteration = 200
+        self.max_iteration = 1500
         self.dim = dim
         self.w = np.random.random([20, dim + 1])
 
     def train(self, feature, labels):
         for k in range(self.max_iteration):
-            if (k == 50):
-                self.learning_rate = 1
-            if (k == 100):
+            if (k == 70):
                 self.learning_rate = 0.1
 
             for i in range(np.size(feature, 0)):
@@ -39,7 +37,9 @@ class perceptron():
                 # print(self.w)
                 self.w = self.w + self.learning_rate * np.multiply( (label_onehot - pred), np.multiply(pred, (1 - pred)) ) @  vector.reshape(1, self.dim + 1)
                 # a = input() 
-            print(l)
+            if(k % 100 == 0):
+                print('iteration:{}, {}'.format(k, l))
+
     def onehot(self, label):
         one_hot = np.zeros(20)
         one_hot[label] = 1
