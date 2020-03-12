@@ -7,6 +7,10 @@ class Dataset:
         self.df_train = None
         self.df_test = None
         self.get_data()
+        self.group_train = None
+        self.group_test = None
+        self.sentences_train = None
+        self.sentences_test = None
 
     def get_data(self):
         train = '../ner/%strain.bio' % self.name
@@ -31,7 +35,12 @@ class Dataset:
         return pd.DataFrame.from_dict(data_dict)
 
     def get_sentences(self):
-        return self.df_train.groupby('sentence_id', sort=False).agg({'word':' '.join, 'tag': ' '.join}), self.df_test.groupby('sentence_id', sort=False).agg({'word':' '.join, 'tag': ' '.join})
+
+        self.group_train = self.df_train.groupby('sentence_id', sort=False).apply(lambda s: [(w, t) for w, t in zip(s['word'].values.tolist(),s['tag'].values.tolist())])
+        self.group_test = self.df_test.groupby('sentence_id', sort=False).apply(lambda s: [(w, t) for w, t in zip(s['word'].values.tolist(),s['tag'].values.tolist())])
+        self.sentences_train = [s for s in self.group_train]
+        self.sentences_test = [s for s in self.group_test]
+        return self.sentences_train, self.sentences_test
 
     def save(self):
         '''save processed dataframe'''

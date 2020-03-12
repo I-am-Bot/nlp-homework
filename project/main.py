@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 from dataset import Dataset
 import numpy as np
+from featureextractor import sent2features, sent2labels
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
@@ -13,6 +14,10 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import classification_report
 from sklearn import preprocessing
+import sklearn_crfsuite
+from sklearn_crfsuite import scorers
+from sklearn_crfsuite import metrics
+from collections import Counter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=15, help='Random seed.')
@@ -73,6 +78,21 @@ print(classification_report(y_pred=pa.predict(X_test), y_true=y_test))
 # TODO apply CRF
 # get sentences samples, for CRF, LSTM, WORD2VEC, BERT...
 train, test = data.get_sentences()
+train_X = [sent2features(s) for s in train]
+train_Y = [sent2labels(s) for s in train]
+test_X = [sent2features(s) for s in test]
+test_Y = [sent2labels(s) for s in test]
 
+crf = sklearn_crfsuite.CRF(
+        algorithm='lbfgs',
+        c1=0.1,
+        c2=0.1,
+        max_iterations=100,
+        all_possible_transitions=True
 
+)
+crf.fit(train_X, train_Y)
+
+pred_Y = crf.predict(test_X)
+print(metrics.flat_classification_report(pred_Y, test_Y))
 
