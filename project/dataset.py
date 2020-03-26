@@ -1,9 +1,11 @@
 import pandas as pd
+import numpy as np
 
 class Dataset:
 
     def __init__(self, name, max_len = 80):
         self.name = name
+        self.df = None
         self.df_train = None
         self.df_test = None
         self.get_data()
@@ -17,16 +19,16 @@ class Dataset:
         self.tag_to_index = None
         self.index_to_tag = None
         self.prepare_dictionaries()
-        
+
 
     def get_data(self):
-        train = 'ner/%strain.bio' % self.name
-        test = 'ner/%stest.bio' % self.name
-#         train = '../ner/%strain.bio' % self.name
-#         test = '../ner/%stest.bio' % self.name
+        # train = 'ner/%strain.bio' % self.name
+        # test = 'ner/%stest.bio' % self.name
+        train = '../ner/%strain.bio' % self.name
+        test = '../ner/%stest.bio' % self.name
         self.df_train = self.read_data(train)
         self.df_test = self.read_data(test)
-                
+        self.df = pd.concat([self.df_train, self.df_test])
 
     def read_data(self, filename):
         data_dict = {'sentence_id': [], 'word': [], 'tag': []}
@@ -40,19 +42,19 @@ class Dataset:
                 line = line.strip().split()
                 data_dict['sentence_id'].append(sentence_id)
                 data_dict['word'].append(line[1])
-                data_dict['tag'].append(line[0])                
+                data_dict['tag'].append(line[0])
         return pd.DataFrame.from_dict(data_dict)
 
-    
+
     def prepare_sentences(self):
         self.group_train = self.df_train.groupby('sentence_id', sort=False).apply(lambda s: [(w, t) for w, t in zip(s['word'].values.tolist(),s['tag'].values.tolist())])
         self.group_test = self.df_test.groupby('sentence_id', sort=False).apply(lambda s: [(w, t) for w, t in zip(s['word'].values.tolist(),s['tag'].values.tolist())])
         self.sentences_train = [s for s in self.group_train]
         self.sentences_test = [s for s in self.group_test]
-        
-        
+
+
     def prepare_dictionaries(self):
-        df = pd.concat([self.df_train, self.df_test])
+        df = self.df
         words = df['word'].unique()
         tags = df['tag'].unique()
         self.word_to_index = {'PADword': 0, 'UNKNOWNword': 1}
@@ -65,15 +67,37 @@ class Dataset:
         for i, tag in enumerate(tags):
             self.tag_to_index[tag] = i+1
             self.index_to_tag[i+1] = tag
-    
+
     def get_sentences(self):
         return self.sentences_train, self.sentences_test
-    
+
+    def get_sentences_labels(self):
+        ''' get sentences and labels separately'''
+
+        self.prepare_sentences()
+        self.df['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
+        data = self.df.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+        return data['word'], data['label']
+
+    def split_train_test(self, data):
+        train_len = len(df_train)
+        return data[: train_len], data[train_len: ]
+
+    def get_sentences_labels_splits(self):
+        ''' get sentences and labels separately for train and test'''
+
+        self.prepare_sentences()
+        self.df_train['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
+        self.df_test['label'] = self.df_test['tag'].map(lambda x: self.tag_to_index[x])
+        train = self.df_train.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+        test = self.df_test.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+
+        return train['word'], train['label'], test['word'], test['label']
 
     def get_dictionaries(self):
         return self.word_to_index, self.index_to_word, self.tag_to_index, self.index_to_tag
-     
-    
+
+
     def save(self):
         '''save processed dataframe'''
         raise NotImplementedError
