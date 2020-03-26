@@ -83,13 +83,16 @@ print('PassiveAggressiveClassifier Classification Report\n', classification_repo
 # print(classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=new_classes))
 
 
-# TODO apply CRF
 # get sentences samples, for CRF, LSTM, WORD2VEC, BERT...
 train, test = data.get_sentences()
 train_X = [sent2features(s) for s in train]
 train_Y = [sent2labels(s) for s in train]
 test_X = [sent2features(s) for s in test]
 test_Y = [sent2labels(s) for s in test]
+
+
+import ipdb
+ipdb.set_trace()
 
 crf = sklearn_crfsuite.CRF(
         algorithm='lbfgs',
@@ -107,7 +110,7 @@ print('CRF Classification Report\n', metrics.flat_classification_report(pred_Y, 
 # Bidirectional LSTM with CRF
 # hyper parameters
 BATCH_SIZE = 200
-EPOCHS = 10
+EPOCHS = 100
 MAX_LEN = 25
 EMBEDDING = 40
 
@@ -133,12 +136,15 @@ test_y = pad_sequences(maxlen = MAX_LEN, sequences = test_y, padding = "post", v
 test_y = [to_categorical(i, num_classes=no_tags) for i in test_y]
 
 input = Input(shape = (MAX_LEN,))
+
+import ipdb
+ipdb.set_trace()
+
 model = Embedding(input_dim = no_words, output_dim = EMBEDDING, input_length = MAX_LEN, mask_zero=True)(input)
 model = Bidirectional(LSTM(units = 50, return_sequences=True, recurrent_dropout=0.1))(model)
 model = TimeDistributed(Dense(50, activation="relu"))(model)
 crf = CRF_2nd(no_tags)
 out_layer = crf(model)
-
 
 model = Model(input, out_layer)
 model.compile(optimizer="rmsprop", loss=crf.loss_function, metrics=[crf.accuracy])
@@ -148,12 +154,14 @@ model.summary()
 history = model.fit(train_X, np.array(train_y), batch_size=BATCH_SIZE, epochs=EPOCHS,
                     validation_split=0.1, verbose=2)
 
-
 pred_y = model.predict(test_X)
 pred_y = np.argmax(pred_y, axis=-1)
 y_test_true = np.argmax(test_y, -1)
+y_test_true = [[index_to_tag[i] for i in row] for row in y_test_true]
+y_test_true = [[x for x in row if x!='PADword'] for row in y_test_true]
 
 pred_y = [[index_to_tag[i] for i in row] for row in pred_y]
-y_test_true = [[index_to_tag[i] for i in row] for row in y_test_true]
+pred_y = [[x.replace("PADword", "O") for x in pred_y[index]][: len(y_test_true[index])] for index in range(len(y_test_true))]
 
 print('LSTM Classification Report\n', metrics.flat_classification_report(pred_y, y_test_true))
+

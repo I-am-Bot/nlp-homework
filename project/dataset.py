@@ -74,13 +74,19 @@ class Dataset:
     def get_sentences_labels(self):
         ''' get sentences and labels separately'''
 
+        # self.prepare_sentences()
+        # self.df['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
+        # data = self.df.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
         self.prepare_sentences()
-        self.df['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
-        data = self.df.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+        self.df_train['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
+        self.df_test['label'] = self.df_test['tag'].map(lambda x: self.tag_to_index[x])
+        train = self.df_train.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+        test = self.df_test.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
+        data = pd.concat([train, test])
         return data['word'], data['label']
 
     def split_train_test(self, data):
-        train_len = len(df_train)
+        train_len = self.df_train.sentence_id.max() + 1
         return data[: train_len], data[train_len: ]
 
     def get_sentences_labels_splits(self):
@@ -96,7 +102,6 @@ class Dataset:
 
     def get_dictionaries(self):
         return self.word_to_index, self.index_to_word, self.tag_to_index, self.index_to_tag
-
 
     def save(self):
         '''save processed dataframe'''
