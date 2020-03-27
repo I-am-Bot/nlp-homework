@@ -12,7 +12,6 @@ from keras.models import Model, Input
 from keras.callbacks import ModelCheckpoint
 from keras.utils import to_categorical
 import tensorflow as tf
-
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import Perceptron
@@ -91,9 +90,6 @@ test_X = [sent2features(s) for s in test]
 test_Y = [sent2labels(s) for s in test]
 
 
-import ipdb
-ipdb.set_trace()
-
 crf = sklearn_crfsuite.CRF(
         algorithm='lbfgs',
         c1=0.1,
@@ -136,9 +132,6 @@ test_y = pad_sequences(maxlen = MAX_LEN, sequences = test_y, padding = "post", v
 test_y = [to_categorical(i, num_classes=no_tags) for i in test_y]
 
 input = Input(shape = (MAX_LEN,))
-
-import ipdb
-ipdb.set_trace()
 
 model = Embedding(input_dim = no_words, output_dim = EMBEDDING, input_length = MAX_LEN, mask_zero=True)(input)
 model = Bidirectional(LSTM(units = 50, return_sequences=True, recurrent_dropout=0.1))(model)
