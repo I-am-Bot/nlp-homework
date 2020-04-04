@@ -40,9 +40,10 @@ class Dataset:
                     continue
                 x = []
                 line = line.strip().split()
-                data_dict['sentence_id'].append(sentence_id)
-                data_dict['word'].append(line[0])
-                data_dict['tag'].append(line[1])
+                if(len(line) == 4):
+                    data_dict['sentence_id'].append(sentence_id)
+                    data_dict['word'].append(line[0])
+                    data_dict['tag'].append(line[3])
         return pd.DataFrame.from_dict(data_dict)
 
 
