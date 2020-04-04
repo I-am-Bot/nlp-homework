@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import argparse
-from dataset import Dataset
+from conll_dataset import Dataset
 import numpy as np
 from featureextractor import sent2features, sent2labels
 from keras_contrib.layers import CRF as CRF_2nd
@@ -28,7 +28,7 @@ from collections import Counter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=15, help='Random seed.')
-parser.add_argument('--dataset', type=str, default='restaurant', choices=['restaurant', 'eng'], help='dataset')
+parser.add_argument('--dataset', type=str, default='./Data/Conll2003_NER/', help='dataset')
 
 args = parser.parse_args()
 data = Dataset(name=args.dataset)
