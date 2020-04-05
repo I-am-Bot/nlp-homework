@@ -43,6 +43,8 @@ class Dataset:
                 if(len(line) == 4):
                     data_dict['sentence_id'].append(sentence_id)
                     data_dict['word'].append(line[0])
+                    if line[3].startswith('B') or line[3].startswith('I'):
+                        line[3] = line[3][2: ]
                     data_dict['tag'].append(line[3])
         return pd.DataFrame.from_dict(data_dict)
 
@@ -58,11 +60,13 @@ class Dataset:
         df = self.df
         words = df['word'].unique()
         tags = df['tag'].unique()
-        self.word_to_index = {'PADword': 0, 'UNKNOWNword': 1}
-        self.index_to_word = {0: 'PADword', 1: 'UNKNOWNword'}
+        # self.word_to_index = {'PADword': 0, 'UNKNOWNword': 1}
+        # self.index_to_word = {0: 'PADword', 1: 'UNKNOWNword'}
+        self.word_to_index = {'PADword': 0}
+        self.index_to_word = {0: 'PADword'}
         for i, word in enumerate(words):
-            self.word_to_index[word] = i+2
-            self.index_to_word[i+2] = word
+            self.word_to_index[word] = i+1
+            self.index_to_word[i+1] = word
         self.tag_to_index = {'PADword': 0}
         self.index_to_tag = {0: 'PADword'}
         for i, tag in enumerate(tags):
@@ -79,6 +83,7 @@ class Dataset:
         # self.df['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
         # data = self.df.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
         self.prepare_sentences()
+
         self.df_train['label'] = self.df_train['tag'].map(lambda x: self.tag_to_index[x])
         self.df_test['label'] = self.df_test['tag'].map(lambda x: self.tag_to_index[x])
         train = self.df_train.groupby('sentence_id', sort=False).agg({'word':' '.join, 'label': list})
