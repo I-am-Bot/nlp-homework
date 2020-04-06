@@ -22,7 +22,7 @@ class Ensemble:
         in the prediction list should be used when all the predictions disagree.
         """
         # create array for numeric values of votes
-        ensemble_array = np.zeros((len(y_test), len(predictions)))
+        ensemble_array = np.zeros((len(predictions[0]), len(predictions)))
         for row in range(ensemble_array.shape[0]):
             for col in range(ensemble_array.shape[1]):
                 ensemble_array[row][col] = tag_to_index[predictions[col][row][2]]
