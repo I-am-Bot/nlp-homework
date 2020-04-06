@@ -5,7 +5,12 @@ from sklearn_crfsuite import metrics
 
 class Ensemble:
 
-    def __init__(self, predictions, tag_to_index, index_to_tag, y_test, tags_without_o, best_evaluator=False):
+    def __init__(self, predictions, tag_to_index={'PADword': 0, 'O': 1, 'B-ORG': 2, 'B-MISC': 3, 'B-PER': 4, 'I-PER': 5, 
+                                                  'B-LOC': 6,'I-ORG': 7, 'I-MISC': 8, 'I-LOC': 9}, 
+                 index_to_tag={0: 'PADword', 1: 'O', 2: 'B-ORG', 3: 'B-MISC', 4: 'B-PER', 5: 'I-PER', 
+                               6: 'B-LOC', 7: 'I-ORG', 8: 'I-MISC', 9: 'I-LOC'}, 
+                 tags_without_o=['B-ORG', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC'], 
+                 best_evaluator=False):
         """
         Takes in a list of prediction lists, forward and backward index to tag conversion dictionaries, and
         a list of labels. It generates and stores an evaluation in 'self.report'
@@ -16,16 +21,11 @@ class Ensemble:
         :param best_evaluator: Boolean value for whether or not the first list of predictions
         in the prediction list should be used when all the predictions disagree.
         """
-        # flatten arrays
-        for idx, pred_list in enumerate(predictions):
-            if(isinstance(pred_list[0], list)):
-                predictions[idx] = self.__flatten(pred_list)
-        
         # create array for numeric values of votes
         ensemble_array = np.zeros((len(y_test), len(predictions)))
         for row in range(ensemble_array.shape[0]):
             for col in range(ensemble_array.shape[1]):
-                ensemble_array[row][col] = tag_to_index[predictions[col][row]]
+                ensemble_array[row][col] = tag_to_index[predictions[col][row][2]]
 
         prediction_votes = stats.mode(ensemble_array, axis=1)
 
@@ -34,24 +34,9 @@ class Ensemble:
 
         for idx, vote in enumerate(prediction_votes.mode):
             if (best_evaluator & prediction_votes.count[idx] == 1):
-                pred = index_to_tag[int(ensemble_array[idx][0])]
+                ensemble_pred_y.append(index_to_tag[int(ensemble_array[idx][0])])
             else:
-                pred = index_to_tag[int(vote)]
-        # tgake out the O's - removing the if statement will add them back in of course
-            if pred != 'O':
-                ensemble_pred_y.append(pred)
-                ensemble_true_y.append(y_test[idx])
+                ensemble_pred_y.append(index_to_tag[int(vote)])
+            ensemble_true_y.append(conditions[0][idx][1])
 
         self.report = classification_report(ensemble_pred_y, ensemble_true_y, labels=tags_without_o)
-            
-    def __flatten(self, pred_list):
-        """
-        Takes in a list lists and returns it as flattened one dimensional list
-        :param pred_list: lists
-        :return: A flattened one dimensional list
-        """
-        flat_list = []
-        for sublist in pred_list:
-            for item in sublist:
-                flat_list.append(item)
-        return flat_list
