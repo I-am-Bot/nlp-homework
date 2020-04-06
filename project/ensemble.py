@@ -37,6 +37,6 @@ class Ensemble:
                 ensemble_pred_y.append(index_to_tag[int(ensemble_array[idx][0])])
             else:
                 ensemble_pred_y.append(index_to_tag[int(vote)])
-            ensemble_true_y.append(conditions[0][idx][1])
+            ensemble_true_y.append(predictions[0][idx][1])
 
         self.report = classification_report(ensemble_pred_y, ensemble_true_y, labels=tags_without_o)
