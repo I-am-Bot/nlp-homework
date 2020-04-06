@@ -17,9 +17,9 @@ class Ensemble:
         in the prediction list should be used when all the predictions disagree.
         """
         # flatten arrays
-        for pred_list in predictions:
+        for idx, pred_list in enumerate(predictions):
             if(isinstance(pred_list[0], list)):
-                pred_list = self.__flatten(pred_list)
+                predictions[idx] = self.__flatten(pred_list)
         
         # create array for numeric values of votes
         ensemble_array = np.zeros((len(y_test), len(predictions)))
@@ -44,7 +44,7 @@ class Ensemble:
 
         self.report = classification_report(ensemble_pred_y, ensemble_true_y, labels=tags_without_o)
             
-    def __flatten(pred_list):
+    def __flatten(self, pred_list):
         """
         Takes in a list lists and returns it as flattened one dimensional list
         :param pred_list: lists
