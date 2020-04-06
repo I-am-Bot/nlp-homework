@@ -14,10 +14,10 @@ class Ensemble:
         """
         Takes in a list of prediction lists, forward and backward index to tag conversion dictionaries, and
         a list of labels. It generates and stores an evaluation in 'self.report'
-        :param tag_to_index: dictionary where the key:value pairs are tag:index
-        :param index_to_tag: dictionary where the key: value pairs are index:tag
-        :param test_y: The true labels for checking the quality of the predictions
-        :param labels: List of labels to use when scoring.
+        :param predictions: List of Lists of lists with an inner list format of (word, tag, prediction)
+        :param tag_to_index: Dictionary where the key:value pairs are tag:index
+        :param index_to_tag: Dictionary where the key: value pairs are index:tag
+        :param tages_without_o: List of labels to use when scoring.
         :param best_evaluator: Boolean value for whether or not the first list of predictions
         in the prediction list should be used when all the predictions disagree.
         """
