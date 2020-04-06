@@ -28,13 +28,16 @@ from collections import Counter
 from sklearn.ensemble import VotingClassifier
 from scipy import stats
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--seed', type=int, default=15, help='Random seed.')
-parser.add_argument('--dataset', type=str, default='./Data/Conll2003_NER/', help='dataset')
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--seed', type=int, default=15, help='Random seed.')
+# parser.add_argument('--dataset', type=str, default='./Data/Conll2003_NER/', help='dataset')
 
-args = parser.parse_args()
-data = Dataset(name=args.dataset)
+# args = parser.parse_args()
+# data = Dataset(name=args.dataset)
+data = Dataset('./Data/Conll2003_NER/')
 train, test = data.df_train, data.df_test
+
+tags_without_o = ['B-ORG', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC']
 
 # parser = argparse.ArgumentParser()
 # parser.add_argument('--seed', type=int, default=15, help='Random seed.')
@@ -70,25 +73,25 @@ new_classes = np.unique(y_train).tolist()
 
 per = Perceptron(n_jobs=-1, max_iter=100)
 per.fit(X_train, y_train)
-print('Perceptron Classification Report\n', classification_report(y_pred=per.predict(X_test), y_true=y_test))
+print('Perceptron Classification Report\n', classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=tags_without_o))
 # per.partial_fit(X_train, y_train, classes)
 # print(classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=new_classes))
 
 sgd = SGDClassifier()
 sgd.fit(X_train, y_train)
-print('SGDClassifier Classification Report\n', classification_report(y_pred=sgd.predict(X_test), y_true=y_test))
+print('SGDClassifier Classification Report\n', classification_report(y_pred=sgd.predict(X_test), y_true=y_test, labels=tags_without_o))
 # sgd.partial_fit(X_train, y_train, classes)
 # print(classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=new_classes))
 
 nb = MultinomialNB(alpha=0.01)
 nb.fit(X_train, y_train)
-print('MultinomialNB Classification Report\n', classification_report(y_pred=nb.predict(X_test), y_true=y_test))
+print('MultinomialNB Classification Report\n', classification_report(y_pred=nb.predict(X_test), y_true=y_test, labels=tags_without_o))
 # nb.partial_fit(X_train, y_train, classes)
 # print(classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=new_classes))
 
 pa = PassiveAggressiveClassifier()
 pa.fit(X_train, y_train)
-print('PassiveAggressiveClassifier Classification Report\n', classification_report(y_pred=pa.predict(X_test), y_true=y_test))
+print('PassiveAggressiveClassifier Classification Report\n', classification_report(y_pred=pa.predict(X_test), y_true=y_test, labels=tags_without_o))
 # pa.partial_fit(X_train, y_train, classes)
 # print(classification_report(y_pred=per.predict(X_test), y_true=y_test, labels=new_classes))
 
@@ -112,7 +115,7 @@ crf = sklearn_crfsuite.CRF(
 crf.fit(train_X, train_Y)
 
 pred_Y = crf.predict(test_X)
-print('CRF Classification Report\n', metrics.flat_classification_report(pred_Y, test_Y))
+print('CRF Classification Report\n', metrics.flat_classification_report(pred_Y, test_Y, labels=tags_without_o))
 
 # Bidirectional LSTM with CRF
 # hyper parameters
@@ -121,7 +124,7 @@ def longest_sentence(lst):
     max_length = len(max_list) 
 
 BATCH_SIZE = 200
-EPOCHS = 100
+EPOCHS = 20
 MAX_LEN = longest_sentence(test)
 EMBEDDING = 40
 
@@ -171,7 +174,7 @@ y_test_true = [[x for x in row if x!='PADword'] for row in y_test_true]
 pred_y = [[index_to_tag[i] for i in row] for row in pred_y]
 pred_y = [[x.replace("PADword", "O") for x in pred_y[index]][: len(y_test_true[index])] for index in range(len(y_test_true))]
 
-print('LSTM Classification Report\n', metrics.flat_classification_report(pred_y, y_test_true))
+print('LSTM Classification Report\n', metrics.flat_classification_report(pred_y, y_test_true, labels=tags_without_o))
 
 # Used four methods for the ensemble but more could easily be added
 
@@ -208,4 +211,4 @@ for idx, vote in enumerate(prediction_votes.mode):
         ensemble_pred_y.append(pred)
         ensemble_true_y.append(y_test[idx])
         
-print('Ensemble Classification Report\n', classification_report(ensemble_pred_y, ensemble_true_y))
+print('Ensemble Classification Report\n', classification_report(ensemble_pred_y, ensemble_true_y, labels=tags_without_o))
