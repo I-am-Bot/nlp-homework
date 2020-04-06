@@ -5,8 +5,7 @@ from sklearn_crfsuite import metrics
 
 class Ensemble:
 
-    def __init__(predictions, tag_to_index, index_to_tag, test_y, tags_without_o, best_evaluator=False,
-                 flat=False):
+    def __init__(self, predictions, tag_to_index, index_to_tag, y_test, tags_without_o, best_evaluator=False):
         """
         Takes in a list of prediction lists, forward and backward index to tag conversion dictionaries, and
         a list of labels. It generates and stores an evaluation in 'self.report'
@@ -16,27 +15,43 @@ class Ensemble:
         :param labels: List of labels to use when scoring.
         :param best_evaluator: Boolean value for whether or not the first list of predictions
         in the prediction list should be used when all the predictions disagree.
-        :param flat: Boolean value for whether or not the prediction lists are all one dimensions or nested
-        lists.
         """
-
+        # flatten arrays
+        for pred_list in predictions:
+            if(isinstance(pred_list[0], list)):
+                pred_list = self.__flatten(pred_list)
+        
         # create array for numeric values of votes
         ensemble_array = np.zeros((len(y_test), len(predictions)))
         for row in range(ensemble_array.shape[0]):
             for col in range(ensemble_array.shape[1]):
-                ensemble_array[row][col] = tag_to_index(predictions[col][row])
+                ensemble_array[row][col] = tag_to_index[predictions[col][row]]
 
         prediction_votes = stats.mode(ensemble_array, axis=1)
 
         ensemble_pred_y = []
+        ensemble_true_y = []
 
         for idx, vote in enumerate(prediction_votes.mode):
             if (best_evaluator & prediction_votes.count[idx] == 1):
-                ensemble_pred_y.append(index_to_tag[int(ensemble_array[idx][0])])
+                pred = index_to_tag[int(ensemble_array[idx][0])]
             else:
-                ensemble_pred_y.append(index_to_tag[int(vote)])
+                pred = index_to_tag[int(vote)]
+        # tgake out the O's - removing the if statement will add them back in of course
+            if pred != 'O':
+                ensemble_pred_y.append(pred)
+                ensemble_true_y.append(y_test[idx])
 
-        if flat:
-            self.report = metrics.flat_classification_report(ensemble_pred_y, test_y, labels=tags_without_o)
-        else:
-            self.report = classification_report(ensemble_pred_y, ensemble_true_y)
+        self.report = classification_report(ensemble_pred_y, ensemble_true_y, labels=tags_without_o)
+            
+    def __flatten(pred_list):
+        """
+        Takes in a list lists and returns it as flattened one dimensional list
+        :param pred_list: lists
+        :return: A flattened one dimensional list
+        """
+        flat_list = []
+        for sublist in pred_list:
+            for item in sublist:
+                flat_list.append(item)
+        return flat_list
